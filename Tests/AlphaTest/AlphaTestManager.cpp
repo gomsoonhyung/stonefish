@@ -68,7 +68,7 @@ void AlphaTestManager::BuildScenario()
     ////////ALPHA AUV 0114
     // Hull with coordinate system test - rpy = (0, 0, 0)
     sf::PhysicsSettings phy;
-    phy.mode = sf::PhysicsMode::SUBMERGED;  // Fully submerged
+    phy.mode = sf::PhysicsMode::SUBMERGED;  // SUBMERGED mode for underwater operation
     phy.collisions = true;
     phy.buoyancy = true;
 
@@ -94,35 +94,61 @@ void AlphaTestManager::BuildScenario()
         "yellow",                   // Look
         sf::Scalar(0.01)            // Shell thickness (like boat 0.09)
     );
-    // Scale mass - slightly heavier for better stability
-    hull->ScalePhysicalPropertiesToArbitraryMass(25.0);
+    // Set CG at 1/4 radius below center for roll stability
+    // Hull radius = 0.1m, so CG offset = +0.05m in z (down in Stonefish)
+    // Inertia estimated for torpedo shape: Ixx small, Iyy=Izz larger
+    hull->SetArbitraryPhysicalProperties(
+        16.5,                                              // mass [kg]
+        sf::Vector3(0.1, 2.5, 2.5),                       // inertia [kg·m²] (torpedo-like)
+        sf::Transform(sf::IQ(), sf::Vector3(0.12, 0, 0.05))  // CG offset: +5cm in z (down)
+    );
 
     ////////WINGS - Control surfaces for pitch/dive control
-    // Wing physics settings - enable buoyancy for balance
+    // Wing physics settings - SUBMERGED mode to match hull
     sf::PhysicsSettings wingPhy;
-    wingPhy.mode = sf::PhysicsMode::SUBMERGED;
+    wingPhy.mode = sf::PhysicsMode::SUBMERGED;  // Match hull mode for underwater operation
     wingPhy.collisions = false;
     wingPhy.buoyancy = true;  // Enable buoyancy for lateral balance
 
-    // Wing paths
+    // Wing paths (4 wings: left, right, up, down)
     std::string rightWingPath = "/home/cloudpark/underwater_sim_ws/rightwing.obj";
     std::string leftWingPath = "/home/cloudpark/underwater_sim_ws/leftwing.obj";
+    std::string upWingPath = "/home/cloudpark/underwater_sim_ws/upwing.obj";
+    std::string downWingPath = "/home/cloudpark/underwater_sim_ws/downwing.obj";
 
-    // Right wing (starboard) - root at Y=0.1, centered around X=-0.425
+    // Right wing (starboard) - extends +Y direction
     sf::Polyhedron* rightWing = new sf::Polyhedron(
         "RightWing", wingPhy,
         rightWingPath, sf::Scalar(1.0), sf::I4(),
-        "Aluminum", "gray"
+        "Fiberglass", "gray"
     );
-    rightWing->ScalePhysicalPropertiesToArbitraryMass(0.5);
+    rightWing->ScalePhysicalPropertiesToArbitraryMass(0.26);
 
-    // Left wing (port) - root at Y=-0.1, centered around X=-0.425
+    // Left wing (port) - extends -Y direction
     sf::Polyhedron* leftWing = new sf::Polyhedron(
         "LeftWing", wingPhy,
         leftWingPath, sf::Scalar(1.0), sf::I4(),
-        "Aluminum", "gray"
+        "Fiberglass", "gray"
     );
-    leftWing->ScalePhysicalPropertiesToArbitraryMass(0.5);
+    leftWing->ScalePhysicalPropertiesToArbitraryMass(0.26);
+
+    // Up wing (dorsal) - extends -Z direction (up in Stonefish)
+    // Same physics as other wings for consistent buoyancy
+    sf::Polyhedron* upWing = new sf::Polyhedron(
+        "UpWing", wingPhy,
+        upWingPath, sf::Scalar(1.0), sf::I4(),
+        "Fiberglass", "gray"
+    );
+    upWing->ScalePhysicalPropertiesToArbitraryMass(0.26);
+
+    // Down wing (ventral) - extends +Z direction (down in Stonefish)
+    // Same physics as other wings for consistent buoyancy
+    sf::Polyhedron* downWing = new sf::Polyhedron(
+        "DownWing", wingPhy,
+        downWingPath, sf::Scalar(1.0), sf::I4(),
+        "Fiberglass", "gray"
+    );
+    downWing->ScalePhysicalPropertiesToArbitraryMass(0.30);
 
     ////////CRP (Contra-Rotating Propellers)
     // Propeller physics - no buoyancy effect
@@ -177,38 +203,70 @@ void AlphaTestManager::BuildScenario()
     // Create robot with wings
     sf::FeatherstoneRobot* alpha = new sf::FeatherstoneRobot("AlphaAUV");
 
-    // Define links: hull (base) + wings
+    // Define links: hull (base) + 4 wings
     std::vector<sf::SolidEntity*> wingLinks;
     wingLinks.push_back(rightWing);
     wingLinks.push_back(leftWing);
+    wingLinks.push_back(upWing);
+    wingLinks.push_back(downWing);
     alpha->DefineLinks(hull, wingLinks);
 
-    // Define revolute joints for wing pitch control
-    // Wing root is at mesh origin (0,0,0)
-    // Joint origin places wing on hull at (-0.425, ±0.1, 0)
+    // Wing joint X position - at the rear of part 6 (stern section)
+    // Hull stern at x = -0.91m, wings attached near stern
+    sf::Scalar wingJointX = -0.6;  // Rear section of hull
+    sf::Scalar hullRadius = 0.1;
+
+    // Define revolute joints for wing control
+    // Left/Right wings: Y-axis rotation for pitch control
+    // Up/Down wings: Y-axis rotation for yaw/rudder control
+
+    // Right wing (starboard) - attached at +Y
     alpha->DefineRevoluteJoint(
         "RightWingJoint",
         "AlphaHull",
         "RightWing",
-        sf::Transform(sf::IQ(), sf::Vector3(-0.425, 0.1, 0.0)),
+        sf::Transform(sf::IQ(), sf::Vector3(wingJointX, hullRadius, 0.0)),
         sf::Vector3(0, 1, 0),  // Y-axis rotation for pitch
         std::make_pair(sf::Scalar(-0.5), sf::Scalar(0.5)),
-        sf::Scalar(1.0)  // Add damping to stabilize
+        sf::Scalar(1.0)
     );
 
+    // Left wing (port) - attached at -Y
     alpha->DefineRevoluteJoint(
         "LeftWingJoint",
         "AlphaHull",
         "LeftWing",
-        sf::Transform(sf::IQ(), sf::Vector3(-0.425, -0.1, 0.0)),
+        sf::Transform(sf::IQ(), sf::Vector3(wingJointX, -hullRadius, 0.0)),
         sf::Vector3(0, 1, 0),
         std::make_pair(sf::Scalar(-0.5), sf::Scalar(0.5)),
-        sf::Scalar(1.0)  // Add damping
+        sf::Scalar(1.0)
+    );
+
+    // Up wing (dorsal) - attached at -Z (up in Stonefish)
+    alpha->DefineRevoluteJoint(
+        "UpWingJoint",
+        "AlphaHull",
+        "UpWing",
+        sf::Transform(sf::IQ(), sf::Vector3(wingJointX, 0.0, -hullRadius)),
+        sf::Vector3(0, 0, 1),  // Z-axis rotation for yaw
+        std::make_pair(sf::Scalar(-0.5), sf::Scalar(0.5)),
+        sf::Scalar(1.0)
+    );
+
+    // Down wing (ventral) - attached at +Z (down in Stonefish)
+    alpha->DefineRevoluteJoint(
+        "DownWingJoint",
+        "AlphaHull",
+        "DownWing",
+        sf::Transform(sf::IQ(), sf::Vector3(wingJointX, 0.0, hullRadius)),
+        sf::Vector3(0, 0, 1),  // Z-axis rotation for yaw
+        std::make_pair(sf::Scalar(-0.5), sf::Scalar(0.5)),
+        sf::Scalar(1.0)
     );
 
     alpha->BuildKinematicStructure();
 
-    // Servo actuators - use lower gains like JointsTest
+    // Servo actuators for all 4 wings
     sf::Servo* rightWingServo = new sf::Servo("RightWingServo", 1.0, 1.0, 100.0);
     rightWingServo->setControlMode(sf::ServoControlMode::POSITION);
     alpha->AddJointActuator(rightWingServo, "RightWingJoint");
@@ -216,6 +274,14 @@ void AlphaTestManager::BuildScenario()
     sf::Servo* leftWingServo = new sf::Servo("LeftWingServo", 1.0, 1.0, 100.0);
     leftWingServo->setControlMode(sf::ServoControlMode::POSITION);
     alpha->AddJointActuator(leftWingServo, "LeftWingJoint");
+
+    sf::Servo* upWingServo = new sf::Servo("UpWingServo", 1.0, 1.0, 100.0);
+    upWingServo->setControlMode(sf::ServoControlMode::POSITION);
+    alpha->AddJointActuator(upWingServo, "UpWingJoint");
+
+    sf::Servo* downWingServo = new sf::Servo("DownWingServo", 1.0, 1.0, 100.0);
+    downWingServo->setControlMode(sf::ServoControlMode::POSITION);
+    alpha->AddJointActuator(downWingServo, "DownWingJoint");
 
     // Add CRP thrusters at stern (rear) of AUV
     // Hull stern is at x = -0.91m, propellers attached close to hull
@@ -231,12 +297,20 @@ void AlphaTestManager::BuildScenario()
 
     alpha->AddLinkSensor(odom, "AlphaHull", sf::I4());
 
-    // Add robot at water surface (z=0.05)
-    AddRobot(alpha, sf::Transform(sf::IQ(), sf::Vector3(0, 0, 0.05)));
+    // Add robot underwater (z=0.5) with SUBMERGED physics mode
+    // SUBMERGED mode provides stable buoyancy when fully underwater
+    AddRobot(alpha, sf::Transform(sf::IQ(), sf::Vector3(0, 0, 1)));
 
-    // Set CRP thruster setpoints (opposite rotation for contra-rotating)
-    thrusterFront->setSetpoint(50);   // Forward rotation
-    thrusterRear->setSetpoint(-50);   // Reverse rotation (contra-rotating)
+    // Set CRP thruster setpoints
+    // Both positive setpoint = same thrust direction
+    // rightHand flag in Thruster constructor determines rotation direction (true=CW, false=CCW)
+    // Torque cancellation comes from opposite rotation direction, not opposite setpoint
+    thrusterFront->setSetpoint(0.25);   // Right-handed (CW) rotation
+    thrusterRear->setSetpoint(-0.25);    // Left-handed (CCW) rotation - torques cancel out
+
+    // Set elevator angle for depth control (negative = nose up for lift)
+    rightWingServo->setDesiredPosition(1);  // -0.40 rad (약 -23°)
+    leftWingServo->setDesiredPosition(1);   // 좌우 동일 → pitch up for lift
 
     std::cout << "=== AlphaTest BuildScenario() completed ===" << std::endl;
 }
