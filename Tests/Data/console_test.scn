@@ -107,10 +107,11 @@
     <include file="girona500auv_console.scn">
 		<arg name="robot_name" value="GIRONA500"/>
 	</include>
-
+<!--
     <contact name="EEPipeContact">
 		<bodyA name="HorizontalPipe" display="path"/>
 		<bodyB name="GIRONA500/Vehicle"/>
-		<history points="100"/>
+		<history points="1000"/>
 	</contact>
+	-->
 </scenario>

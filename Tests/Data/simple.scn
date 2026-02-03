@@ -19,8 +19,8 @@
 	</materials>
 
 	<looks>
-		<look name="blue" color="0.0 0.0 1.0" roughness="0.2" metalness="0.5"/>
-		<look name="red" color="1.0 1.0 1.0" roughness="0.1" metalness="0.0"/> 
+		<look name="blue" rgb="0.0 0.0 1.0" roughness="0.2" metalness="0.5"/>
+		<look name="red" rgb="1.0 1.0 1.0" roughness="0.1" metalness="0.0"/> 
 	</looks>
 
 	<static name="Box1" type="box">
@@ -94,22 +94,23 @@
 			<ros_topic value="robot/desired_joint_state"/>
 		</actuator>
 
-		<actuator name="Light1" type="light">
+		<light name="Light1">
 			<link name="L1"/>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
-			<specs cone_angle="20.0" illuminance="10000.0"/>
+			<specs radius="0.1" cone_angle="20.0" illuminance="10000.0"/>
 			<color temperature="4300.0"/>		
-		</actuator>
+		</light>
 
-		<actuator name="Thrust1" type="thruster">
+		<actuator name="Thrust1" type="propeller">
 			<link name="L1"/>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
-			<specs thrust_coeff="0.2" torque_coeff="0.02" max_rpm="1000.0"/>
+			<specs thrust_coeff="0.2" torque_coeff="0.02" max_rpm="1000.0" inverted="false"/>
 			<propeller diameter="0.2" right="true">
 				<mesh filename="propeller.obj" scale="1.0"/>
 				<material name="steel"/>
 				<look name="red"/>
 			</propeller>
+			<ros_topic value="robot/thrust_cmd"/>
 		</actuator>
 
 		<world_transform xyz="5.0 0.0 0.0" rpy="0.0 0.0 0.0"/>

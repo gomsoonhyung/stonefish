@@ -138,12 +138,14 @@
 		<sensor name="dynamics" type="odometry" rate="30.0">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+			<ros_publisher topic="/$(arg robot_name)/dynamics"/>
 		</sensor>
 
 		<sensor name="pressure" type="pressure" rate="5.0">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.48 0.35 -0.4"/>
 			<noise pressure="5.0"/>
+			<ros_publisher topic="/$(arg robot_name)/pressure"/>
 		</sensor>
 
 		<sensor name="dvl" type="dvl" rate="5.0">
@@ -152,18 +154,28 @@
 			<specs beam_angle="30.0"/>
 			<range velocity="9.0 9.0 9.0" altitude_min="0.5" altitude_max="81.0"/>
 			<noise velocity="0.0015" altitude="0.001"/>
+			<ros_publisher topic="/$(arg robot_name)/dvl"/>
 		</sensor>
 
 		<sensor name="imu_filter" type="imu" rate="20.0">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
 			<noise angle="0.000001745 0.000001745 0.000001745" angular_velocity="0.00001745"/>
+			<ros_publisher topic="/$(arg robot_name)/imu_filter"/>
 		</sensor>
 
 		<sensor name="gps" type="gps" rate="1.0">
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="-0.54 -0.35 -0.74"/>
 			<noise ned_position="0.5"/>
+			<ros_publisher topic="/$(arg robot_name)/gps"/>
+		</sensor>
+
+		<sensor name="front_camera" type="camera" rate="10.0">
+			<link name="Vehicle"/>
+			<origin rpy="0.0 0.0 0.0" xyz="-0.75 0.0 0.4"/>
+			<specs resolution_x="640" resolution_y="480" horizontal_fov="90.0"/>
+			<ros_publisher topic="/$(arg robot_name)/front_camera"/>
 		</sensor>
 
 		<actuator name="ThrusterSurgePort" type="thruster">
@@ -185,6 +197,7 @@
 				<thrust_coeff forward="0.48" reverse="0.48"/>
 				<torque_coeff value="0.05"/>
 			</thrust_model>
+			<ros_subscriber topic="/$(arg robot_name)/ThrusterSurgePort/setpoint"/>
 		</actuator>
 
 		<actuator name="ThrusterSurgeStarboard" type="thruster">
@@ -206,6 +219,7 @@
 				<thrust_coeff forward="0.48" reverse="0.48"/>
 				<torque_coeff value="0.05"/>
 			</thrust_model>
+			<ros_subscriber topic="/$(arg robot_name)/ThrusterSurgeStarboard/setpoint"/>
 		</actuator>
 
 		<actuator name="ThrusterHeaveBow" type="thruster">
@@ -227,6 +241,7 @@
 				<thrust_coeff forward="0.48" reverse="0.48"/>
 				<torque_coeff value="0.05"/>
 			</thrust_model>
+			<ros_subscriber topic="/$(arg robot_name)/ThrusterHeaveBow/setpoint"/>
 		</actuator>
 
 		<actuator name="ThrusterHeaveStern" type="thruster">
@@ -248,6 +263,7 @@
 				<thrust_coeff forward="0.48" reverse="0.48"/>
 				<torque_coeff value="0.05"/>
 			</thrust_model>
+			<ros_subscriber topic="/$(arg robot_name)/ThrusterHeaveStern/setpoint"/>
 		</actuator>
 
 		<actuator name="ThrusterSway" type="thruster">
@@ -269,6 +285,7 @@
 				<thrust_coeff forward="0.48" reverse="0.48"/>
 				<torque_coeff value="0.05"/>
 			</thrust_model>
+			<ros_subscriber topic="/$(arg robot_name)/ThrusterSway/setpoint"/>
 		</actuator>
 
 		<world_transform rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>

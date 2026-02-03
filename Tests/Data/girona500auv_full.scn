@@ -167,12 +167,13 @@
 			<noise velocity="0.0015" altitude="0.001"/>
 		</sensor>
 
-		<sensor name="acc" type="accelerometer" rate="100.0">
+		<sensor name="acc" type="accelerometer" rate="30.0">
 			<history samples="1000"/>
 			<link name="Vehicle"/>
 			<origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
 		</sensor>
 -
+
 		<sensor name="imu_filter" type="imu" rate="20.0">
 			<history samples="1000"/>
 			<link name="Vehicle"/>
@@ -190,16 +191,16 @@
 			<origin rpy="0.0 0.0 1.571" xyz="0.5 -0.12 0.5"/>
 			<specs resolution_x="1360" resolution_y="1024" horizontal_fov="55.0"/>
 		</sensor>
-
+<!--
 		<sensor name ="fls" type="fls" rate="10.0">
 			<link name="Vehicle"/>
 		    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
-			<specs beams="512" bins="500" horizontal_fov="120.0" vertical_fov="30.0" output_format="uint32"/>
+			<specs beams="512" bins="500" horizontal_fov="120.0" vertical_fov="30.0" output_format="uint16"/>
     		<settings range_min="0.5" range_max="10.0" gain="1.1"/>
     		<noise multiplicative="0.01" additive="0.02"/>
     		<display colormap="hot"/>
 		</sensor>
-
+-->
 		<actuator name="ThrusterSurgePort" type="thruster">
 			<link name="Vehicle"/>
 			<origin rpy="3.1416 0.0 0.0" xyz="-0.3297 -0.2587 -0.021"/>
@@ -210,7 +211,7 @@
 				<look name="propeller" />
 			</propeller>
 			<rotor_dynamics type="mechanical_pi">
-				<!-- <rotor_inertia value="0.05"/> -->
+				<rotor_inertia value="0.05"/>
 				<kp value="1.0"/>
 				<ki value="0.5"/>
 				<ilimit value="2.0"/>
@@ -231,7 +232,7 @@
 				<look name="propeller" />
 			</propeller>
 			<rotor_dynamics type="mechanical_pi">
-				<!-- <rotor_inertia value="0.05"/> -->
+				<rotor_inertia value="0.05"/>
 				<kp value="1.0"/>
 				<ki value="0.5"/>
 				<ilimit value="2.0"/>
@@ -252,7 +253,7 @@
 				<look name="propeller" />
 			</propeller>
 			<rotor_dynamics type="mechanical_pi">
-				<!-- <rotor_inertia value="0.05"/> -->
+				<rotor_inertia value="0.05"/>
 				<kp value="1.0"/>
 				<ki value="0.5"/>
 				<ilimit value="2.0"/>
@@ -273,7 +274,7 @@
 				<look name="propeller" />
 			</propeller>
 			<rotor_dynamics type="mechanical_pi">
-				<!-- <rotor_inertia value="0.05"/> -->
+				<rotor_inertia value="0.05"/>
 				<kp value="1.0"/>
 				<ki value="0.5"/>
 				<ilimit value="2.0"/>
@@ -294,7 +295,7 @@
 				<look name="propeller" />
 			</propeller>
 			<rotor_dynamics type="mechanical_pi">
-				<!-- <rotor_inertia value="0.05"/> -->
+				<rotor_inertia value="0.05"/>
 				<kp value="1.0"/>
 				<ki value="0.5"/>
 				<ilimit value="2.0"/>
@@ -304,7 +305,7 @@
 				<torque_coeff value="0.05"/>
 			</thrust_model>
 		</actuator>
-		
+
 		<light name="Omni">
 			<link name="Vehicle"/>
 			<specs illuminance="20000.0" radius="0.1"/>
